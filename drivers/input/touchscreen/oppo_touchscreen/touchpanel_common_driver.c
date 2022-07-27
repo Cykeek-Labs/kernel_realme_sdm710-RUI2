@@ -466,7 +466,7 @@ static void tp_gesture_handle(struct touchpanel_data *ts)
     }
 #endif // end of CONFIG_OPPO_TP_APK
 
-    if (gesture_info_temp.gesture_type != UnkownGesture && gesture_info_temp.gesture_type != FingerprintDown && gesture_info_temp.gesture_type != FingerprintUp) {
+    if (gesture_info_temp.gesture_type != UnkownGesture && gesture_info_temp.gesture_type != FingerprintDown && gesture_info_temp.gesture_type != FingerprintUp && CHK_BIT(ts->gesture_enable_indep, (1 << gesture_info_temp.gesture_type))) {
         memcpy(&ts->gesture, &gesture_info_temp, sizeof(struct gesture_info));
 #if GESTURE_RATE_MODE
         if(ts->geature_ignore)
@@ -1590,8 +1590,9 @@ static ssize_t proc_gesture_control_write(struct file *file, const char __user *
         return count;
 
     mutex_lock(&ts->mutex);
+
     if (ts->gesture_enable != value) {
-        ts->gesture_enable = value;
+        ts->gesture_enable = value;    
         TPD_INFO("%s: gesture_enable = %d, is_suspended = %d\n", __func__, ts->gesture_enable, ts->is_suspended);
         if (ts->is_incell_panel && (ts->suspend_state == TP_RESUME_EARLY_EVENT || ts->disable_gesture_ctrl) && (ts->tp_resume_order == LCD_TP_RESUME)) {
             TPD_INFO("tp will resume, no need mode_switch in incell panel\n"); /*avoid i2c error or tp rst pulled down in lcd resume*/
@@ -1689,8 +1690,9 @@ static ssize_t proc_gesture_control_indep_write(struct file *file, const char __
 
 	mutex_lock(&ts->mutex);
 
+	ts->gesture_enable_indep = value;
+
 	if (ts->ts_ops->set_gesture_state) {
-		ts->gesture_enable_indep = value;
 		ts->ts_ops->set_gesture_state(ts->chip_data, value);
 	}
 	mutex_unlock(&ts->mutex);
@@ -5852,7 +5854,7 @@ static int init_parse_dts(struct device *dev, struct touchpanel_data *ts)
     ts->charger_pump_support    = of_property_read_bool(np, "charger_pump_support");
     ts->wireless_charger_support = of_property_read_bool(np, "wireless_charger_support");
     ts->headset_pump_support    = of_property_read_bool(np, "headset_pump_support");
-    ts->black_gesture_support   = of_property_read_bool(np, "black_gesture_support");
+    ts->black_gesture_support   = true;
     ts->black_gesture_indep_support = true;
     ts->single_tap_support      = of_property_read_bool(np, "single_tap_support");
     ts->gesture_test_support    = of_property_read_bool(np, "black_gesture_test_support");
