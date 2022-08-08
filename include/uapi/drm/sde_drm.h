@@ -109,6 +109,11 @@
 #define SDE_DRM_SEC_ONLY               1
 
 /**
+ * sde fod dim layer
+ */
+#define FOD_PRESSED_LAYER_ZORDER 0x41000033u
+
+/**
  * struct sde_drm_pix_ext_v1 - version 1 of pixel ext structure
  * @num_ext_pxls_lr: Number of total horizontal pixels
  * @num_ext_pxls_tb: Number of total vertical lines
