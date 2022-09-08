@@ -29,90 +29,6 @@ struct param_outband {
 	phys_addr_t  paddr;
 };
 
-struct mem_mapping_hdr {
-	/*
-	 * LSW of parameter data payload address. Supported values: any.
-	 * - Must be set to zero for in-band data.
-	 */
-	u32 data_payload_addr_lsw;
-
-	/*
-	 * MSW of Parameter data payload address. Supported values: any.
-	 * - Must be set to zero for in-band data.
-	 * - In the case of 32 bit Shared memory address, MSW field must be
-	 *   set to zero.
-	 * - In the case of 36 bit shared memory address, bit 31 to bit 4 of
-	 *   MSW must be set to zero.
-	 */
-	u32 data_payload_addr_msw;
-
-	/*
-	 * Memory map handle returned by DSP through
-	 * ASM_CMD_SHARED_MEM_MAP_REGIONS command.
-	 * Supported Values: Any.
-	 * If memory map handle is NULL, the parameter data payloads are
-	 * within the message payload (in-band).
-	 * If memory map handle is non-NULL, the parameter data payloads begin
-	 * at the address specified in the address MSW and LSW (out-of-band).
-	 */
-	u32 mem_map_handle;
-
-} __packed;
-
-/*
- * Payload format for parameter data.
- * Immediately following these structures are param_size bytes of parameter
- * data.
- */
-struct param_hdr_v1 {
-	/* Valid ID of the module. */
-	uint32_t module_id;
-
-	/* Valid ID of the parameter. */
-	uint32_t param_id;
-
-	/* The size of the parameter specified by the module/param ID combo */
-	uint16_t param_size;
-
-	/* This field must be set to zero. */
-	uint16_t reserved;
-} __packed;
-
-struct param_hdr_v2 {
-	/* Valid ID of the module. */
-	uint32_t module_id;
-
-	/* Valid ID of the parameter. */
-	uint32_t param_id;
-
-	/* The size of the parameter specified by the module/param ID combo */
-	uint32_t param_size;
-} __packed;
-
-struct param_hdr_v3 {
-	/* Valid ID of the module. */
-	uint32_t module_id;
-
-	/* Instance of the module. */
-	uint16_t instance_id;
-
-	/* This field must be set to zero. */
-	uint16_t reserved;
-
-	/* Valid ID of the parameter. */
-	uint32_t param_id;
-
-	/* The size of the parameter specified by the module/param ID combo */
-	uint32_t param_size;
-} __packed;
-
-/* A union of all param_hdr versions for versitility and max size */
-union param_hdrs {
-	struct param_hdr_v1 v1;
-	struct param_hdr_v2 v2;
-	struct param_hdr_v3 v3;
-};
-
 #define ADSP_ADM_VERSION    0x00070000
 
 #define ADM_CMD_SHARED_MEM_MAP_REGIONS    0x00010322
@@ -596,7 +512,7 @@ struct adm_cmd_device_open_v8 {
 
 /* Sets one or more parameters to a COPP. */
 #define ADM_CMD_SET_PP_PARAMS_V5                        0x00010328
-#define ADM_CMD_SET_PP_PARAMS_V6 0x0001035D
+
 /*  Payload of the #ADM_CMD_SET_PP_PARAMS_V5 command.
  *	If the data_payload_addr_lsw and data_payload_addr_msw element
  *	are NULL, a series of adm_param_datastructures immediately
@@ -644,38 +560,6 @@ struct adm_param_data_v5 {
 	/* Reserved for future enhancements.
 	 * This field must be set to zero.
 	 */
-} __packed;
-
-/*
- * Structure of the ADM Set PP Params command. Parameter data must be
- * pre-packed with correct header for either V2 or V3 when sent in-band.
- * Use q6core_pack_pp_params to pack the header and data correctly depending on
- * Instance ID support.
- */
-struct adm_cmd_set_pp_params {
-	/* APR Header */
-	struct apr_hdr apr_hdr;
-
-	/* The memory mapping header to be used when sending out of band */
-	struct mem_mapping_hdr mem_hdr;
-
-	/*
-	 * Size in bytes of the variable payload accompanying this
-	 * message or
-	 * in shared memory. This is used for parsing the parameter
-	 * payload.
-	 */
-	u32 payload_size;
-
-	/*
-	 * Parameter data for in band payload. This should be structured as the
-	 * parameter header immediately followed by the parameter data. Multiple
-	 * parameters can be set in one command by repeating the header followed
-	 * by the data for as many parameters as need to be set.
-	 * Use q6core_pack_pp_params to pack the header and data correctly
-	 * depending on Instance ID support.
-	 */
-	u8 param_data[0];
 } __packed;
 
 #define ASM_STREAM_CMD_REGISTER_PP_EVENTS 0x00013213
@@ -878,32 +762,6 @@ struct audproc_volume_ctrl_master_gain {
 	/* Clients must set this field to zero. */
 	uint16_t                  reserved;
 } __packed;
-
-#ifdef OPLUS_FEATURE_KTV
-// Haoyun.luo@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/04/06, Add for ktv2.0
-struct audproc_revert_param {
-	int32_t mode;
-	int32_t volume;
-	int32_t peg;
-	int32_t pitchange;
-	int32_t reverbparam;
-	int32_t enabled;
-	int32_t reverved0;
-	int32_t reverved1;
-	int32_t reverved2;
-	int32_t reverved3;
-	int32_t reverved4;
-	int32_t reverved5;
-	int32_t reverved6;
-	int32_t reverved7;
-	int32_t reverved8;
-	int32_t reverved9;
-	int32_t reverved10;
-	int32_t reverved11;
-	int32_t reverved12;
-	int32_t reverved13;
-} __packed;
-#endif /* OPLUS_FEATURE_KTV */
 
 struct audproc_soft_step_volume_params {
 	struct adm_cmd_set_pp_params_v5 params;
@@ -3591,6 +3449,15 @@ struct aptx_channel_mode_param_t {
  */
 #define AFE_SB_DATA_FORMAT_GENERIC_COMPRESSED    0x3
 
+#ifdef VENDOR_EDIT
+//Nan.Zhong@PSW.MM.AudioDriver.Machine, 2019/09/25, Add for CR#2500290 & CR#2345250
+ /*
+  * Parameter to send frame control size
+  * to DSP for AAC encoder in AFE.
+  */
+#define AFE_PARAM_ID_AAC_FRM_SIZE_CONTROL 0x000132EA
+#endif /* VENDOR_EDIT */
+
 /*
  * ID for AFE port module. This will be used to define port properties.
  * This module supports following parameter IDs:
@@ -3760,6 +3627,25 @@ struct asm_aac_enc_cfg_v2_t {
 	 */
 	uint32_t     sample_rate;
 } __packed;
+#ifdef VENDOR_EDIT
+//Nan.Zhong@PSW.MM.AudioDriver.Machine, 2019/09/25, Add for CR#2500290 & CR#2345250
+/* Structure to control frame size of AAC encoded frames. */
+struct asm_aac_frame_size_control_t {
+	/* Type of frame size control: MTU_SIZE / PEAK_BIT_RATE*/
+	uint32_t ctl_type;
+	/*
+	 * Control value
+	 * MTU_SIZE: MTU size in bytes
+	 * PEAK_BIT_RATE: Peak bitrate in bits per second.
+	 */
+	uint32_t ctl_value;
+} __packed;
+
+struct asm_aac_enc_cfg_t {
+	struct asm_aac_enc_cfg_v2_t aac_cfg;
+	struct asm_aac_frame_size_control_t frame_ctl;
+} __packed;
+#endif /* VENDOR_EDIT */
 
 /* FMT ID for apt-X Classic */
 #define ASM_MEDIA_FMT_APTX 0x000131ff
@@ -3955,7 +3841,12 @@ struct afe_port_media_type_t {
 
 union afe_enc_config_data {
 	struct asm_sbc_enc_cfg_t sbc_config;
+	#ifndef VENDOR_EDIT
+	//Nan.Zhong@PSW.MM.AudioDriver.Machine, 2019/09/25, Modify for CR#2500290 & CR#2345250
 	struct asm_aac_enc_cfg_v2_t aac_config;
+	#else /* VENDOR_EDIT */
+	struct asm_aac_enc_cfg_t aac_config;
+	#endif /* VENDOR_EDIT */
 	struct asm_custom_enc_cfg_t  custom_config;
 	struct asm_celt_enc_cfg_t  celt_config;
 	struct asm_aptx_enc_cfg_t  aptx_config;
@@ -4065,6 +3956,10 @@ union afe_port_config {
 	struct afe_param_id_tdm_cfg               tdm;
 	struct afe_param_id_usb_audio_cfg         usb_audio;
 	struct afe_param_id_aptx_sync_mode        sync_mode_param;
+	#ifdef VENDOR_EDIT
+	//Nan.Zhong@PSW.MM.AudioDriver.Machine, 2019/09/25, Add for CR#2500290 & CR#2345250
+	struct asm_aac_frame_size_control_t       frame_ctl_param;
+	#endif /* VENDOR_EDIT */
 	struct afe_enc_fmt_id_param_t             enc_fmt;
 	struct afe_port_media_type_t              media_type;
 	struct afe_enc_cfg_blk_param_t            enc_blk_param;

@@ -77,10 +77,10 @@ struct tfa98xx {
     struct delayed_work monitor_work;
     struct delayed_work interrupt_work;
     struct delayed_work tapdet_work;
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
     /*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24, Add for avoiding pop when start*/
     struct delayed_work vol_work;
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     struct mutex dsp_lock;
     int dsp_init;
     int dsp_fw_state;
@@ -111,18 +111,10 @@ struct tfa98xx {
     int irq_gpio;
 
     int handle;
-#ifdef OPLUS_ARCH_EXTENDS
-/*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2019/09/10, Add for calibration range*/
-    u32 min_mohms;
-    u32 max_mohms;
-#endif /* OPLUS_ARCH_EXTENDS */
 
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
 #ifdef CONFIG_DEBUG_FS
     struct dentry *dbg_dir;
-#else
-    struct proc_dir_entry *dbg_dir;
-#endif/*CONFIG_DEBUG_FS*/
+#endif
     u8 reg;
 
     unsigned int count_wait_for_source_state;

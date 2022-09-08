@@ -24,26 +24,17 @@
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <linux/i2c.h>
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef OPLUS_ARCH_EXTENDS
-#undef CONFIG_DEBUG_FS
-#endif /* OPLUS_ARCH_EXTENDS */
-
-#ifdef CONFIG_DEBUG_FS
 #include <linux/debugfs.h>
-#else
-#include <linux/proc_fs.h>
-#endif/*CONFIG_DEBUG_FS*/
 #include <linux/version.h>
 #include <linux/input.h>
 #include <linux/regulator/consumer.h>
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2018/05/24,
  *Add for sharing software image
  */
 #include <soc/oppo/oppo_project.h>
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 #include "config.h"
 
@@ -65,13 +56,13 @@
 #include "tfa98xx_parameters.h"
 
 #define TFA98XX_VERSION        "2.10.1-a"
+#define CONFIG_DEBUG_FS 1
 
-
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
 #include <linux/debugfs.h>
 #include <linux/fs.h>
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 /* Change volume selection behavior:
  * Uncomment following line to generate a profile change when updating
@@ -90,12 +81,12 @@
 #define TFA98XX_RATES SNDRV_PCM_RATE_8000_48000
 
 /*#define TFA98XX_FORMATS    (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE) */
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for 24bit*/
 #define TFA98XX_FORMATS    SNDRV_PCM_FMTBIT_S16_LE
-#else /* OPLUS_ARCH_EXTENDS */
+#else /* VENDOR_EDIT */
 #define TFA98XX_FORMATS    SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 #define TF98XX_MAX_DSP_START_TRY_COUNT    10
 
 #define XMEM_TAP_ACK  0x0122
@@ -127,18 +118,13 @@ static int tfa98xx_get_fssel(unsigned int rate);
 
 static int get_profile_from_list(char *buf, int id);
 static int get_profile_id_for_sr(int id, unsigned int rate);
-#ifdef OPLUS_ARCH_EXTENDS
-/*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2019/09/10, Add for calibration range*/
-#define SMART_PA_RANGE_DEFAULT_MIN (6000)
-#define SMART_PA_RANGE_DEFAULT_MAX (10000)
-#endif /* OPLUS_ARCH_EXTENDS */
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for force calibrate*/
 static int tfa98xx_speaker_recalibration(Tfa98xx_handle_t handle,unsigned int *speakerImpedance);
 static int tfa98xx_get_speaker_resistance(Tfa98xx_handle_t handle, unsigned int *speakerResistance, unsigned int *speakerTemp);
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*John.Xu@PSW.MM.AudioDriver.FTM, 2017/01/03, Add for get spk revsion*/
 static bool is_tfa98xx_series(int rev){
     bool ret = false;
@@ -194,7 +180,7 @@ static const struct snd_kcontrol_new ftm_spk_rev_controls[] = {
 	SOC_ENUM_EXT("SPK_Pa Revision", ftm_spk_rev_enum,
 			ftm_spk_rev_get, ftm_spk_rev_put),
 };
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 struct tfa98xx_rate {
     unsigned int rate;
     unsigned int fssel;
@@ -212,7 +198,7 @@ static struct tfa98xx_rate rate_to_fssel[] = {
     { 48000, 8 },
 };
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /* Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2016/07/11,
  * Add for support rate without check profile.
  */
@@ -224,13 +210,11 @@ static struct snd_pcm_hw_constraint_list constraints_12_24 = {
     .list   = tfa98xx_asrc_rates,
     .count  = ARRAY_SIZE(tfa98xx_asrc_rates),
 };
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
-#ifdef CONFIG_DEBUG_FS
 static  struct dentry *tfa98xx_debugfs;
-#endif
 #define TFA98XX_DEBUG_FS_NAME "ftm_tfa98xx"
 int ftm_mode = 0;
 static char ftm_load_file[15] = "load_file_ok";
@@ -281,17 +265,17 @@ static const struct file_operations tfa98xx_debug_ops =
     .read = kernel_debug_read,
     .write = kernel_debug_write,
 };
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 /* Wrapper for tfa start */
 static enum Tfa98xx_Error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profile, int *vstep)
 {
     enum Tfa98xx_Error err;
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
     int ret = 0;
     int reg = 0;
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
     err = tfa_start(next_profile, vstep);
 
@@ -303,7 +287,7 @@ static enum Tfa98xx_Error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_pr
      */
     tfa98xx_interrupt_restore(tfa98xx);
 
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
     //00h bit15(AREFS)  1:clock, 0:no clock
     ret = regmap_read(tfa98xx->regmap, TFA98XX_STATUSREG, &reg);
@@ -319,7 +303,7 @@ static enum Tfa98xx_Error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_pr
         }
     }
     pr_err("%s: TFA98XX_STATUSREG=%x\n", __func__, reg);
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
     return err;
 }
@@ -358,7 +342,7 @@ static void tfa98xx_input_close(struct input_dev *dev)
     tfa98xx_tapdet_check_update(tfa98xx);
 }
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*John.Xu@PSW.MM.AudioDriver.SmartPA,, 2015/12/24, Add for avoid pop when start*/
 static void vol_gradual_change(struct work_struct *work)
 {
@@ -391,7 +375,7 @@ static void vol_gradual_change(struct work_struct *work)
 	mutex_unlock(&tfa98xx->dsp_lock);
 }
 
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 
 static int tfa98xx_register_inputdev(struct tfa98xx *tfa98xx)
@@ -493,6 +477,7 @@ static void tfa98xx_inputdev_unregister(struct tfa98xx *tfa98xx)
     __tfa98xx_inputdev_check_register(tfa98xx, true);
 }
 
+#ifdef CONFIG_DEBUG_FS
 /* OTC reporting
  * Returns the MTP0 OTC bit value
  */
@@ -745,12 +730,7 @@ static ssize_t tfa98xx_dbgfs_start_get(struct file *file,
                      char __user *user_buf, size_t count,
                      loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-    struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
     struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
     struct tfa98xx_control *calib = &(handles_local[tfa98xx->handle].dev_ops.controls.calib);
     char *str;
@@ -798,12 +778,7 @@ static ssize_t tfa98xx_dbgfs_start_set(struct file *file,
                      const char __user *user_buf,
                      size_t count, loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-    struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
     struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
     struct tfa98xx_control *calib = &(handles_local[tfa98xx->handle].dev_ops.controls.calib);
     enum Tfa98xx_Error ret;
@@ -846,20 +821,15 @@ static ssize_t tfa98xx_dbgfs_r_read(struct file *file,
                      char __user *user_buf, size_t count,
                      loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-    struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
     struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
     char *str;
     uint16_t status;
     int ret, calibrate_done;
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for calibrate*/
 	unsigned int speakerImpedance1 = 0;
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     mutex_lock(&tfa98xx->dsp_lock);
     ret = tfa98xx_open(tfa98xx->handle);
@@ -892,23 +862,23 @@ static ssize_t tfa98xx_dbgfs_r_read(struct file *file,
     switch (calibrate_done) {
     case 1:
         /* calibration complete ! */
-		#ifndef OPLUS_ARCH_EXTENDS
+		#ifndef VENDOR_EDIT
 		/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Modify for calibrate*/
 		tfa_dsp_get_calibration_impedance(tfa98xx->handle);
-		#else /* OPLUS_ARCH_EXTENDS */
+		#else /* VENDOR_EDIT */
 		tfa98xx_speaker_recalibration(tfa98xx->handle, &speakerImpedance1);
-		#endif /* OPLUS_ARCH_EXTENDS */
+		#endif /* VENDOR_EDIT */
 
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Modify for calibration*/
         ret = print_calibration(tfa98xx->handle, str, PAGE_SIZE);
-#else /* OPLUS_ARCH_EXTENDS */
+#else /* VENDOR_EDIT */
         ret = snprintf(str, PAGE_SIZE, " Prim:%d mOhms, Sec:%d mOhms\n",
                 speakerImpedance1,
                 handles_local[tfa98xx->handle].mohm[1]);
         pr_err("speakerImpedance1= %d  mohm[0]=%d mohm[1]=%d\n", speakerImpedance1,
         handles_local[tfa98xx->handle].mohm[0], handles_local[tfa98xx->handle].mohm[1]);
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
         break;
     case 0:
     case -1:
@@ -933,65 +903,13 @@ r_c_err:
     return ret;
 }
 
-#ifdef OPLUS_ARCH_EXTENDS
-/*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2019/09/10, Add for calibration range*/
-static ssize_t tfa98xx_dbgfs_range_read(struct file *file,
-				char __user *user_buf, size_t count,
-				loff_t *ppos)
-{
-#ifdef CONFIG_DEBUG_FS
-	struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-	struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
-
-	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
-	char *str = NULL;
-	int ret = 0;
-
-	if (!tfa98xx) {
-		pr_err("%s tfa98xx is null\n", __func__);
-		return -EINVAL;
-	}
-	str = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!str) {
-		ret = -ENOMEM;
-		pr_err("[0x%x] memory allocation failed\n", tfa98xx->i2c->addr);
-		goto range_err;
-	}
-
-	ret = snprintf(str, PAGE_SIZE, " Min:%d mOhms, Max:%d mOhms\n",
-		tfa98xx->min_mohms, tfa98xx->max_mohms);
-	pr_warning("%s addr 0x%x, str=%s\n", __func__, tfa98xx->i2c->addr, str);
-	ret = simple_read_from_buffer(user_buf, count, ppos, str, ret);
-	kfree(str);
-
-range_err:
-	return ret;
-}
-
-/*Nan.Zhong@MULTIMEDIA.AUDIODRIVER.SMARTPA, 2020/09/03, Add for aging calibration*/
-static ssize_t tfa98xx_dbgfs_r_aging_read(struct file *file,
-				     char __user *user_buf, size_t count,
-				     loff_t *ppos)
-{
-	int ret = 0;
-	pr_info("aging calibration start now!\n");
-	ret = tfa98xx_dbgfs_r_read(file, user_buf, count, ppos);
-	return ret;
-}
-
+#ifdef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for read Impedance*/
 static ssize_t tfa98xx_dbgfs_r_Impedance_read(struct file *file,
                      char __user *user_buf, size_t count,
                      loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
 	struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-	struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
 	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
 	char *str;
 	uint16_t status;
@@ -1029,7 +947,7 @@ r_c_err:
     return ret;
 
 }
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 static ssize_t tfa98xx_dbgfs_version_read(struct file *file,
                      char __user *user_buf, size_t count,
@@ -1047,12 +965,7 @@ static ssize_t tfa98xx_dbgfs_dsp_state_get(struct file *file,
                      char __user *user_buf, size_t count,
                      loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-    struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
     struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
     int ret = 0;
     char *str;
@@ -1084,24 +997,19 @@ static ssize_t tfa98xx_dbgfs_dsp_state_set(struct file *file,
                      const char __user *user_buf,
                      size_t count, loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-    struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
     struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
     enum Tfa98xx_Error ret;
     char buf[32];
     const char start_cmd[] = "start";
     const char stop_cmd[] = "stop";
-	#ifndef OPLUS_ARCH_EXTENDS
+	#ifndef VENDOR_EDIT
 	/* Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/18,
 	 * Delete for remove the thread of monitor.
 	 */
     const char mon_start_cmd[] = "monitor start";
     const char mon_stop_cmd[] = "monitor stop";
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     int buf_size;
 
     buf_size = min(count, (size_t)(sizeof(buf)-1));
@@ -1123,7 +1031,7 @@ static ssize_t tfa98xx_dbgfs_dsp_state_set(struct file *file,
         mutex_unlock(&tfa98xx->dsp_lock);
         pr_debug("tfa_stop complete: %d\n", ret);
     }
-	#ifndef OPLUS_ARCH_EXTENDS
+	#ifndef VENDOR_EDIT
 	/* Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/18,
 	 * Delete for remove the thread of monitor.
 	 */
@@ -1135,7 +1043,7 @@ static ssize_t tfa98xx_dbgfs_dsp_state_set(struct file *file,
         pr_info("Manual stop of monitor thread...\n");
         cancel_delayed_work_sync(&tfa98xx->monitor_work);
     }
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 	else {
         return -EINVAL;
     }
@@ -1147,12 +1055,7 @@ static ssize_t tfa98xx_dbgfs_accounting_get(struct file *file,
                      char __user *user_buf, size_t count,
                      loff_t *ppos)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct i2c_client *i2c = file->private_data;
-#else /*CONFIG_DEBUG_FS*/
-    struct i2c_client *i2c = PDE_DATA(file_inode(file));
-#endif/*CONFIG_DEBUG_FS*/
     struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
     char str[255];
     int ret;
@@ -1226,16 +1129,10 @@ DEFINE_SIMPLE_ATTRIBUTE(tfa98xx_dbgfs_reg_##__reg##_fops, tfa98xx_dbgfs_reg_##__
 
 #define VAL(str) #str
 #define TOSTRING(str) VAL(str)
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
 #define TFA98XX_DEBUGFS_REG_CREATE_FILE(__reg, __name)                \
     debugfs_create_file(TOSTRING(__reg) "-" TOSTRING(__name), S_IRUGO|S_IWUGO, dbg_reg_dir,\
                     i2c, &tfa98xx_dbgfs_reg_##__reg##_fops);
-#else
-#define TFA98XX_DEBUGFS_REG_CREATE_FILE(__reg, __name)                \
-    proc_create_data(TOSTRING(__reg) "-" TOSTRING(__name), S_IRUGO|S_IWUGO, dbg_reg_dir,\
-                    &tfa98xx_dbgfs_reg_##__reg##_fops, i2c);
-#endif/*CONFIG_DEBUG_FS*/
+
 
 TFA98XX_DEBUGFS_REG_SET(00);
 TFA98XX_DEBUGFS_REG_SET(01);
@@ -1299,40 +1196,21 @@ static const struct file_operations tfa98xx_dbgfs_accounting_fops = {
     .llseek = default_llseek,
 };
 
-#ifdef OPLUS_ARCH_EXTENDS
-/*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2019/09/10, Add for calibration range*/
-static const struct file_operations tfa98xx_dbgfs_range_fops = {
-    .open = simple_open,
-    .read = tfa98xx_dbgfs_range_read,
-    .llseek = default_llseek,
-};
-/*Nan.Zhong@MULTIMEDIA.AUDIODRIVER.CODEC, 2020/09/03, Add for aging calibration*/
-static const struct file_operations tfa98xx_dbgfs_r_aging_fops = {
-    .open = simple_open,
-    .read = tfa98xx_dbgfs_r_aging_read,
-    .llseek = default_llseek,
-};
+#ifdef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for read Impedance*/
 static const struct file_operations tfa98xx_dbgfs_r_Impedance_fops = {
 	.open = simple_open,
 	.read = tfa98xx_dbgfs_r_Impedance_read,
 	.llseek = default_llseek,
 };
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 static void tfa98xx_debug_init(struct tfa98xx *tfa98xx, struct i2c_client *i2c)
 {
     char name[50];
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     struct dentry *dbg_reg_dir;
-#else
-    struct proc_dir_entry *dbg_reg_dir;
-#endif/*CONFIG_DEBUG_FS*/
 
     scnprintf(name, MAX_CONTROL_NAME, "%s-%x", i2c->name, i2c->addr);
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     tfa98xx->dbg_dir = debugfs_create_dir(name, NULL);
     debugfs_create_file("OTC", S_IRUGO|S_IWUGO, tfa98xx->dbg_dir,
                         i2c, &tfa98xx_dbgfs_calib_otc_fops);
@@ -1350,11 +1228,11 @@ static void tfa98xx_debug_init(struct tfa98xx *tfa98xx, struct i2c_client *i2c)
                         i2c, &tfa98xx_dbgfs_dsp_state_fops);
     debugfs_create_file("accounting", S_IRUGO, tfa98xx->dbg_dir,
                         i2c, &tfa98xx_dbgfs_accounting_fops);
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for read Impedance*/
     debugfs_create_file("R_Impedance", S_IRUGO, tfa98xx->dbg_dir,
                         i2c, &tfa98xx_dbgfs_r_Impedance_fops);
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
     /* Direct registers access */
     if (tfa98xx->flags & TFA98XX_FLAG_TFA9890_FAM_DEV) {
@@ -1386,79 +1264,16 @@ static void tfa98xx_debug_init(struct tfa98xx *tfa98xx, struct i2c_client *i2c)
                         tfa98xx->i2c,
                         &tfa98xx_dbgfs_pga_gain_fops);
     }
-#else /*CONFIG_DEBUG_FS*/
-    tfa98xx->dbg_dir = proc_mkdir(name, NULL);
-    proc_create_data("OTC", S_IRUGO|S_IWUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_calib_otc_fops, i2c);
-    proc_create_data("MTPEX", S_IRUGO|S_IWUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_calib_mtpex_fops, i2c);
-    proc_create_data("TEMP", S_IRUGO|S_IWUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_calib_temp_fops, i2c);
-    proc_create_data("calibrate", S_IRUGO|S_IWUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_calib_start_fops, i2c);
-    proc_create_data("R", S_IRUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_r_fops, i2c);
-    proc_create_data("accounting", S_IRUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_accounting_fops, i2c);
-    /*Chunyu.Xie@PSW.MM.AudioDriver.SmartPA, 2020/07/23, Add for calibration range*/
-    proc_create_data("range", S_IRUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_range_fops, i2c);
-    /*Nan.Zhong@MULTIMEDIA.AUDIODRIVER.CODEC, 2020/09/03, Add for aging calibration*/
-    proc_create_data("r_aging", S_IRUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_r_aging_fops, i2c);
-    proc_create_data("R_Impedance", S_IRUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_r_Impedance_fops, i2c);
-    proc_create_data("version", S_IRUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_version_fops, i2c);
-    proc_create_data("dsp-state", S_IRUGO|S_IWUGO, tfa98xx->dbg_dir,
-                    &tfa98xx_dbgfs_dsp_state_fops, i2c);
-
-    /* Direct registers access */
-    if (tfa98xx->flags & TFA98XX_FLAG_TFA9890_FAM_DEV) {
-        dbg_reg_dir = proc_mkdir("regs", tfa98xx->dbg_dir);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(00, STATUS);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(01, BATTERYVOLTAGE);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(02, TEMPERATURE);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(03, REVISIONNUMBER);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(04, I2SREG);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(05, BAT_PROT);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(06, AUDIO_CTR);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(07, DCDCBOOST);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(08, SPKR_CALIBRATION);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(09, SYS_CTRL);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(0A, I2S_SEL_REG);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(0B, HIDDEN_MTP_KEY2);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(0F, INTERRUPT_REG);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(10, PDM_CTRL);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(11, PDM_OUT_CTRL);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(12, PDM_DS4_R);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(13, PDM_DS4_L);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(22, CTRL_SAAM_PGA);
-        TFA98XX_DEBUGFS_REG_CREATE_FILE(25, MISC_CTRL);
-    }
-
-    if (tfa98xx->flags & TFA98XX_FLAG_SAAM_AVAILABLE) {
-        dev_dbg(tfa98xx->dev, "Adding pga_gain debug interface\n");
-        proc_create_data("pga_gain", S_IRUGO, tfa98xx->dbg_dir,
-                        &tfa98xx_dbgfs_pga_gain_fops,
-                        tfa98xx->i2c);
-    }
-#endif/*CONFIG_DEBUG_FS*/
 }
 
 static void tfa98xx_debug_remove(struct tfa98xx *tfa98xx)
 {
-/*Chong.Tang@MULTIMEDIA.AUDIODRIVER.FEATURE, 2021/07/08, use proc fs to replace debug fs*/
-#ifdef CONFIG_DEBUG_FS
     if (tfa98xx->dbg_dir)
         debugfs_remove_recursive(tfa98xx->dbg_dir);
-#else
-    if (tfa98xx->dbg_dir)
-        proc_remove(tfa98xx->dbg_dir);
-#endif/*CONFIG_DEBUG_FS*/
 }
+#endif
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Add for calibrate*/
 static int tfa98xx_speaker_recalibration(Tfa98xx_handle_t handle,unsigned int *speakerImpedance)
 {
@@ -1503,15 +1318,15 @@ static int tfa98xx_get_speaker_resistance(Tfa98xx_handle_t handle, unsigned int 
     kfree(data);
     return err;
 }
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 static int tfa98xx_get_vstep(struct snd_kcontrol *kcontrol,
                  struct snd_ctl_elem_value *ucontrol)
 {
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Add for code error*/
     int vstep = 0;
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,16,0)
     struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
 #else
@@ -1520,19 +1335,19 @@ static int tfa98xx_get_vstep(struct snd_kcontrol *kcontrol,
     struct tfa98xx *tfa98xx = snd_soc_codec_get_drvdata(codec);
     int mixer_profile = kcontrol->private_value;
     int profile = get_profile_id_for_sr(mixer_profile, tfa98xx->rate);
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Add for code error*/
     if (profile < 0) {
         pr_err("%s the profile requested samplerate is not supported\n", __func__);
         return 0;
     }
-    #endif /* OPLUS_ARCH_EXTENDS */
-    #ifndef OPLUS_ARCH_EXTENDS
+    #endif /* VENDOR_EDIT */
+    #ifndef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Add for code error*/
     int vstep = tfa98xx_prof_vsteps[profile];
     #else
     vstep = tfa98xx_prof_vsteps[profile];
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
     ucontrol->value.integer.value[0] =
                 tfacont_get_max_vstep(0, profile)
                 - vstep - 1;
@@ -1542,7 +1357,7 @@ static int tfa98xx_get_vstep(struct snd_kcontrol *kcontrol,
 static int tfa98xx_set_vstep(struct snd_kcontrol *kcontrol,
                  struct snd_ctl_elem_value *ucontrol)
 {
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Add for code error*/
     int value = 0;
     int vstep = 0;
@@ -1552,7 +1367,7 @@ static int tfa98xx_set_vstep(struct snd_kcontrol *kcontrol,
     int ready = 0;
     unsigned int base_addr_inten = 0;
     int ret = 0;
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,16,0)
     struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
 #else
@@ -1561,14 +1376,14 @@ static int tfa98xx_set_vstep(struct snd_kcontrol *kcontrol,
     struct tfa98xx *tfa98xx = snd_soc_codec_get_drvdata(codec);
     int mixer_profile = kcontrol->private_value;
     int profile = get_profile_id_for_sr(mixer_profile, tfa98xx->rate);
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Add for code error*/
     if (profile < 0) {
         pr_err("%s the profile requested samplerate is not supported\n", __func__);
         return 0;
     }
-    #endif /* OPLUS_ARCH_EXTENDS */
-    #ifndef OPLUS_ARCH_EXTENDS
+    #endif /* VENDOR_EDIT */
+    #ifndef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Modify for code error*/
     int value = ucontrol->value.integer.value[0];
     int vstep = tfa98xx_prof_vsteps[profile];
@@ -1576,12 +1391,12 @@ static int tfa98xx_set_vstep(struct snd_kcontrol *kcontrol,
     int new_vstep, err = 0;
     int ready = 0;
     unsigned int base_addr_inten = TFA_FAM(tfa98xx->handle,INTENVDDS) >> 8;
-    #else /* OPLUS_ARCH_EXTENDS */
+    #else /* VENDOR_EDIT */
     value = ucontrol->value.integer.value[0];
     vstep = tfa98xx_prof_vsteps[profile];
     vsteps = tfacont_get_max_vstep(0, profile);
     base_addr_inten = TFA_FAM(tfa98xx->handle,INTENVDDS) >> 8;
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
     if (no_start != 0)
         return 0;
@@ -1603,17 +1418,17 @@ static int tfa98xx_set_vstep(struct snd_kcontrol *kcontrol,
         tfa98xx_vsteps[0] = new_vstep;
         tfa98xx_vsteps[1] = new_vstep;
         mutex_lock(&tfa98xx->dsp_lock);
-        #ifndef OPLUS_ARCH_EXTENDS
+        #ifndef VENDOR_EDIT
         /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Modify
           for code warning*/
         tfa98xx_open(0);
-        #else /* OPLUS_ARCH_EXTENDS */
+        #else /* VENDOR_EDIT */
         ret = tfa98xx_open(tfa98xx->handle);
         if (ret) {
         	mutex_unlock(&tfa98xx->dsp_lock);
         	return -EBUSY;
         }
-        #endif /* OPLUS_ARCH_EXTENDS */
+        #endif /* VENDOR_EDIT */
         tfa98xx_dsp_system_stable(0, &ready);
         tfa98xx_close(0);
 
@@ -1694,22 +1509,22 @@ static int tfa98xx_set_profile(struct snd_kcontrol *kcontrol,
     struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
 #endif
     struct tfa98xx *tfa98xx = snd_soc_codec_get_drvdata(codec);
-	#ifndef OPLUS_ARCH_EXTENDS
+	#ifndef VENDOR_EDIT
 	/* Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/17,
 	 * Delete for timing sequence.
 	 */
     unsigned int base_addr_inten = TFA_FAM(tfa98xx->handle,INTENVDDS) >> 8;
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     int profile_count = tfa98xx_mixer_profiles;
     int profile = tfa98xx_mixer_profile;
     int new_profile = ucontrol->value.integer.value[0];
-    #ifndef OPLUS_ARCH_EXTENDS
+    #ifndef VENDOR_EDIT
 	/* Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/17,
 	 * Delete for timing sequence.
 	 */
     int err;
     int ready = 0;
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     int prof_idx;
 
 
@@ -1742,7 +1557,7 @@ static int tfa98xx_set_profile(struct snd_kcontrol *kcontrol,
      * Don't call tfa_start() on TFA1 if there is no clock.
      * For TFA2 is able to load the profile without clock.
      */
-    #ifndef OPLUS_ARCH_EXTENDS
+    #ifndef VENDOR_EDIT
 	/* Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/17,
 	 * Delete for timing sequence.
 	 */
@@ -1784,7 +1599,7 @@ static int tfa98xx_set_profile(struct snd_kcontrol *kcontrol,
     }
 
     mutex_unlock(&tfa98xx->dsp_lock);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     /* Flag DSP as invalidated as the profile change may invalidate the
      * current DSP configuration. That way, further stream start can
@@ -2254,7 +2069,7 @@ retry:
             }
             return Tfa98xx_Error_Fail;
         }
-        #ifndef OPLUS_ARCH_EXTENDS
+        #ifndef VENDOR_EDIT
         /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08,Modify for code error*/
         if (tfa98xx_kmsg_regs)
             dev_err(&tfa98xx->i2c->dev, "  WR reg=0x%02x, val=0x%04x %s\n",
@@ -2265,7 +2080,7 @@ retry:
             tfa98xx_trace_printk("\tWR     reg=0x%02x, val=0x%04x %s\n",
                                 subaddress, value,
                                 ret<0? "Error!!" : "");
-        #else /* OPLUS_ARCH_EXTENDS */
+        #else /* VENDOR_EDIT */
         if (tfa98xx_kmsg_regs)
             dev_err(&tfa98xx->i2c->dev, "WR reg=0x%02x, val=0x%04x\n",
                                 subaddress, value);
@@ -2273,7 +2088,7 @@ retry:
         if(tfa98xx_ftrace_regs)
             tfa98xx_trace_printk("\tWR reg=0x%02x, val=0x%04x\n",
                                 subaddress, value);
-        #endif /* OPLUS_ARCH_EXTENDS */
+        #endif /* VENDOR_EDIT */
     } else {
         pr_err("No device available\n");
         error = Tfa98xx_Error_Fail;
@@ -2310,7 +2125,7 @@ retry:
         }
         *val = value & 0xffff;
 
-        #ifndef OPLUS_ARCH_EXTENDS
+        #ifndef VENDOR_EDIT
         /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08,Modify for code error*/
         if (tfa98xx_kmsg_regs)
             dev_err(&tfa98xx->i2c->dev, "RD   reg=0x%02x, val=0x%04x %s\n",
@@ -2320,14 +2135,14 @@ retry:
             tfa98xx_trace_printk("\tRD     reg=0x%02x, val=0x%04x %s\n",
                                 subaddress, *val,
                                 ret<0? "Error!!" : "");
-        #else /* OPLUS_ARCH_EXTENDS */
+        #else /* VENDOR_EDIT */
         if (tfa98xx_kmsg_regs)
             dev_err(&tfa98xx->i2c->dev, "RD reg=0x%02x, val=0x%04x\n",
                                 subaddress, *val);
         if (tfa98xx_ftrace_regs)
             tfa98xx_trace_printk("\tRD reg=0x%02x, val=0x%04x\n",
                                 subaddress, *val);
-        #endif /* OPLUS_ARCH_EXTENDS */
+        #endif /* VENDOR_EDIT */
     } else {
         pr_err("No device available\n");
         error = Tfa98xx_Error_Fail;
@@ -2664,10 +2479,10 @@ static char *fw_name = "tfa98xx.cnt";
 module_param(fw_name, charp, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(fw_name, "TFA98xx DSP firmware (container file) name.");
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Kaiqin.Huang@RM.MM.AudioDriver.SmartPA, 2019/10/03, Add for sharing software image*/
 static char fw_name_project[30] = {0};
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 static nxpTfaContainer_t *container;
 
@@ -2705,7 +2520,7 @@ static void tfa98xx_container_loaded(const struct firmware *cont, void *context)
     pr_debug("%.8s\n", container->type);
     pr_debug("%d ndev\n", container->ndev);
     pr_debug("%d nprof\n", container->nprof);
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
     if(ftm_mode == BOOT_MODE_FACTORY)
     {
@@ -2719,9 +2534,9 @@ static void tfa98xx_container_loaded(const struct firmware *cont, void *context)
     {
         tfa_load_cnt(container, container_size);
     }
-    #else /* OPLUS_ARCH_EXTENDS */
+    #else /* VENDOR_EDIT */
     tfa_load_cnt(container, container_size);
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
     /* register codec with dsp */
     tfa98xx->handle = tfa98xx_register_dsp(tfa98xx);
@@ -2779,12 +2594,12 @@ static void tfa98xx_container_loaded(const struct firmware *cont, void *context)
     mutex_lock(&tfa98xx->dsp_lock);
 
     ret = tfa98xx_tfa_start(tfa98xx, tfa98xx_profile, tfa98xx_vsteps);
-    #ifndef OPLUS_ARCH_EXTENDS
+    #ifndef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Modify for code error*/
     if (ret == Tfa98xx_Error_Ok)
-    #else /* OPLUS_ARCH_EXTENDS */
-    if (ret == Tfa98xx_Error_Ok)
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #else /* VENDOR_EDIT */
+    if (ret == tfa_error_ok)
+    #endif /* VENDOR_EDIT */
         tfa98xx->dsp_init = TFA98XX_DSP_INIT_DONE;
     mutex_unlock(&tfa98xx->dsp_lock);
     tfa98xx_interrupt_enable(tfa98xx, true);
@@ -2792,22 +2607,26 @@ static void tfa98xx_container_loaded(const struct firmware *cont, void *context)
 
 static int tfa98xx_load_container(struct tfa98xx *tfa98xx)
 {
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Kaiqin.Huang@RM.MM.AudioDriver.SmartPA, 2019/10/03, Add for sharing software image*/
     unsigned int prj = get_project();
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
     tfa98xx->dsp_fw_state = TFA98XX_DSP_FW_PENDING;
 
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 /*Kaiqin.Huang@RM.MM.AudioDriver.SmartPA, 2019/10/03, Add for sharing software image*/
-    sprintf(fw_name_project, "tfa98xx.cnt");
+    if (prj == 0) {
+        sprintf(fw_name_project, "tfa98xx.cnt");
+    } else {
+        sprintf(fw_name_project, "tfa98xx_%d.cnt", prj);
+    }
 
     pr_warning("%s, %d, fw_name_project = %s\n", __func__, __LINE__, fw_name_project);
     return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
                                    fw_name_project, tfa98xx->dev, GFP_KERNEL,
                                    tfa98xx, tfa98xx_container_loaded);
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
     return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
                                    fw_name, tfa98xx->dev, GFP_KERNEL,
@@ -2877,7 +2696,7 @@ static void tfa98xx_tapdet_work(struct work_struct *work)
     queue_delayed_work(tfa98xx->tfa98xx_wq, &tfa98xx->tapdet_work, HZ/10);
 }
 
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Delete for remove monitor*/
 static void tfa98xx_monitor(struct work_struct *work)
 {
@@ -2933,19 +2752,19 @@ static void tfa98xx_monitor(struct work_struct *work)
     queue_delayed_work(tfa98xx->tfa98xx_wq, &tfa98xx->monitor_work, 5*HZ);
 
 }
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
 {
     int ret;
     bool failed = false;
     bool reschedule = false;
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24,
 	 *Add for avoid pop when start.
 	 */
     u16 val;
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     if (tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK) {
         pr_info("Skipping tfa_start (no FW: %d)\n", tfa98xx->dsp_fw_state);
@@ -2958,7 +2777,7 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
     }
 
     mutex_lock(&tfa98xx->dsp_lock);
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24,
 	 *Add for avoid pop when start.
 	 */
@@ -2966,19 +2785,19 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
 	val |= TFA98XX_AUDIO_CTR_VOL_MSK;
 	pr_debug("val : %x", val);
 	snd_soc_write(tfa98xx->codec, TFA98XX_AUDIO_CTR, (val));
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     tfa98xx->dsp_init = TFA98XX_DSP_INIT_PENDING;
 
     if (tfa98xx->init_count < TF98XX_MAX_DSP_START_TRY_COUNT) {
         /* directly try to start DSP */
         ret = tfa98xx_tfa_start(tfa98xx, tfa98xx_profile, tfa98xx_vsteps);
-        #ifndef OPLUS_ARCH_EXTENDS
+        #ifndef VENDOR_EDIT
         /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08, Modify for code error*/
         if (ret != Tfa98xx_Error_Ok) {
-        #else /* OPLUS_ARCH_EXTENDS */
-        if (ret != Tfa98xx_Error_Ok) {
-        #endif /* OPLUS_ARCH_EXTENDS */
+        #else /* VENDOR_EDIT */
+        if (ret != tfa_error_ok) {
+        #endif /* VENDOR_EDIT */
             /* It may fail as we may not have a valid clock at that
              * time, so re-schedule and re-try later.
              */
@@ -2999,12 +2818,12 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
              * periodically, and re-init IC to recover if
              * needed.
              */
-		#ifndef OPLUS_ARCH_EXTENDS
+		#ifndef VENDOR_EDIT
 		/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Delete for remove monitor*/
             queue_delayed_work(tfa98xx->tfa98xx_wq,
                         &tfa98xx->monitor_work,
                         1*HZ);
-		#endif /* OPLUS_ARCH_EXTENDS */
+		#endif /* VENDOR_EDIT */
         }
     } else {
         /* exceeded max number ot start tentatives, cancel start */
@@ -3025,7 +2844,7 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
         /* cancel other pending init works */
         cancel_delayed_work(&tfa98xx->init_work);
         tfa98xx->init_count = 0;
-        #ifdef OPLUS_ARCH_EXTENDS
+        #ifdef VENDOR_EDIT
         /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
         //add for open path fail
         if(ftm_mode == BOOT_MODE_FACTORY)
@@ -3033,9 +2852,9 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
             strcpy(ftm_path, "open_path_fail");
 
         }
-        #endif /* OPLUS_ARCH_EXTENDS */
+        #endif /* VENDOR_EDIT */
     }
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
     /*add for a flag that tfa98xx is started finish*/
     if((!tfa98xx->init_count) && (ftm_mode == BOOT_MODE_FACTORY))
@@ -3043,12 +2862,12 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
         pr_info("tfa98xx_dsp_init finish\n");
         strcpy(ftm_tfa98xx_flag, "ok");
     }
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24, Add for avoid pop when start*/
     queue_delayed_work(tfa98xx->tfa98xx_wq, &tfa98xx->vol_work, msecs_to_jiffies(10));
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
     mutex_unlock(&tfa98xx->dsp_lock);
     return;
 }
@@ -3175,18 +2994,18 @@ static int tfa98xx_startup(struct snd_pcm_substream *substream,
         }
     }
 
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2016/07/11,
  *Modify for support rate without check profile.
  */
     return snd_pcm_hw_constraint_list(substream->runtime, 0,
                    SNDRV_PCM_HW_PARAM_RATE,
                    &tfa98xx->rate_constraint);
-#else /* OPLUS_ARCH_EXTENDS */
+#else /* VENDOR_EDIT */
     return snd_pcm_hw_constraint_list(substream->runtime, 0,
                    SNDRV_PCM_HW_PARAM_RATE,
                    &constraints_12_24);
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 }
 
 static int tfa98xx_set_dai_sysclk(struct snd_soc_dai *codec_dai,
@@ -3289,12 +3108,12 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
     }
 
     if (mute) {
-		#ifdef OPLUS_ARCH_EXTENDS
+		#ifdef VENDOR_EDIT
         /*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24,
 		 *Add for avoid pop when start.
 		 */
         cancel_delayed_work_sync(&tfa98xx->vol_work);
-        #endif /* OPLUS_ARCH_EXTENDS */
+        #endif /* VENDOR_EDIT */
         /* stop DSP only when both playback and capture streams
          * are deactivated
          */
@@ -3305,10 +3124,10 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
         if (tfa98xx->pstream != 0 || tfa98xx->cstream != 0)
             return 0;
 
-		#ifndef OPLUS_ARCH_EXTENDS
+		#ifndef VENDOR_EDIT
 		/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/18, Delete for remove monitor*/
         cancel_delayed_work_sync(&tfa98xx->monitor_work);
-		#endif /* OPLUS_ARCH_EXTENDS */
+		#endif /* VENDOR_EDIT */
         cancel_delayed_work_sync(&tfa98xx->init_work);
         if (tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK)
             return 0;
@@ -3323,7 +3142,7 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
             tfa98xx->cstream = 1;
 
         /* Start DSP */
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA.1234963, 2018/02/07,
  *Modify for part of picture sound mute.
  */
@@ -3331,17 +3150,17 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
             queue_delayed_work(tfa98xx->tfa98xx_wq,
                             &tfa98xx->init_work,
                             0);
-#else /* OPLUS_ARCH_EXTENDS */
+#else /* VENDOR_EDIT */
 		if (tfa98xx->dsp_init != TFA98XX_DSP_INIT_PENDING) {
 			tfa98xx_dsp_init(tfa98xx);
 		}
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
     }
 
     return 0;
 }
 
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA.1234963, 2018/02/07,
  *Delete for part of picture sound mute.
  */
@@ -3380,7 +3199,7 @@ static int tfa98xx_trigger(struct snd_pcm_substream *substream, int cmd,
 
 	return ret;
 }
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 
 static const struct snd_soc_dai_ops tfa98xx_dai_ops = {
     .startup = tfa98xx_startup,
@@ -3388,12 +3207,12 @@ static const struct snd_soc_dai_ops tfa98xx_dai_ops = {
     .set_sysclk = tfa98xx_set_dai_sysclk,
     .hw_params = tfa98xx_hw_params,
     .mute_stream = tfa98xx_mute,
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA.1234963, 2018/02/07,
  *Delete for part of picture sound mute.
  */
     .trigger	= tfa98xx_trigger,
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
 };
 
 static struct snd_soc_dai_driver tfa98xx_dai[] = {
@@ -3418,10 +3237,10 @@ static struct snd_soc_dai_driver tfa98xx_dai[] = {
         .ops = &tfa98xx_dai_ops,
         .symmetric_rates = 1,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
-#ifndef OPLUS_ARCH_EXTENDS
+#ifndef VENDOR_EDIT
 /*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/07/20, Delete for no sound on phone*/
         .symmetric_channels = 1,
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
         .symmetric_samplebits = 1,
 #endif
     },
@@ -3443,18 +3262,18 @@ static int tfa98xx_probe(struct snd_soc_codec *codec)
         return -ENOMEM;
 
     INIT_DELAYED_WORK(&tfa98xx->init_work, tfa98xx_dsp_init_work);
-	#ifndef OPLUS_ARCH_EXTENDS
+	#ifndef VENDOR_EDIT
 	/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/18,Delete for remove monitor*/
     INIT_DELAYED_WORK(&tfa98xx->monitor_work, tfa98xx_monitor);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     INIT_DELAYED_WORK(&tfa98xx->interrupt_work, tfa98xx_interrupt);
     INIT_DELAYED_WORK(&tfa98xx->tapdet_work, tfa98xx_tapdet_work);
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24,
 	 *Add for avoid pop when start.
 	 */
 	INIT_DELAYED_WORK(&tfa98xx->vol_work, vol_gradual_change);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     tfa98xx->codec = codec;
 
@@ -3470,11 +3289,11 @@ static int tfa98xx_probe(struct snd_soc_codec *codec)
     }
 #endif
     tfa98xx_add_widgets(tfa98xx);
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /*John.Xu@PSW.MM.AudioDriver.FTM, 2017/01/03, Add for get spk revsion*/
     snd_soc_add_codec_controls(tfa98xx->codec,
             ftm_spk_rev_controls, ARRAY_SIZE(ftm_spk_rev_controls));
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
     dev_info(codec->dev, "tfa98xx codec registered (%s)",
                             tfa98xx->fw.name);
@@ -3490,16 +3309,16 @@ static int tfa98xx_remove(struct snd_soc_codec *codec)
     tfa98xx_inputdev_unregister(tfa98xx);
 
     cancel_delayed_work_sync(&tfa98xx->interrupt_work);
-	#ifndef OPLUS_ARCH_EXTENDS
+	#ifndef VENDOR_EDIT
 	/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/18,Delete for remove monitor*/
     cancel_delayed_work_sync(&tfa98xx->monitor_work);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     cancel_delayed_work_sync(&tfa98xx->init_work);
     cancel_delayed_work_sync(&tfa98xx->tapdet_work);
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24, Add for avoid pop when start*/
 	cancel_delayed_work_sync(&tfa98xx->vol_work);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     if (tfa98xx->tfa98xx_wq)
         destroy_workqueue(tfa98xx->tfa98xx_wq);
@@ -3642,7 +3461,7 @@ static int tfa98xx_ext_reset(struct tfa98xx *tfa98xx)
 
 static int tfa98xx_parse_dt(struct device *dev, struct tfa98xx *tfa98xx,
         struct device_node *np) {
-    tfa98xx->reset_gpio = of_get_named_gpio(np, "reset-gpio", 0);
+    tfa98xx->reset_gpio = of_get_named_gpio(np, "nxp,rst-ctrl-gpio", 0);
     if (tfa98xx->reset_gpio < 0)
         dev_err(dev, "No reset GPIO provided, will not HW reset device\n");
 
@@ -3800,7 +3619,7 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
     mutex_init(&tfa98xx->dsp_lock);
     init_waitqueue_head(&tfa98xx->wq);
 
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     /* Zhiyong.Zheng@PSW.MM.AudioDriver.SmartPA, 2016/06/14, Add for resource*/
     tfa98xx->tfa98xx_vdd = regulator_get(&i2c->dev, "tfa9890_vdd");
     if (IS_ERR(tfa98xx->tfa98xx_vdd))
@@ -3838,7 +3657,7 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
         devm_kfree(&i2c->dev, tfa98xx);
         return ret;
     }
-    #endif /* OPLUS_ARCH_EXTENDS */
+    #endif /* VENDOR_EDIT */
 
     if (np)
     {
@@ -3909,22 +3728,7 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
             return -EINVAL;
         }
     }
-    #ifdef OPLUS_ARCH_EXTENDS
-    /*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2019/09/10, Add for calibration range*/
-    ret = of_property_read_u32(i2c->dev.of_node, "tfa_min_range", &tfa98xx->min_mohms);
-    if (ret) {
-        dev_err(&i2c->dev, "Failed to parse spk_min_range node\n");
-        tfa98xx->min_mohms = SMART_PA_RANGE_DEFAULT_MIN;
-    }
 
-    ret = of_property_read_u32(i2c->dev.of_node, "tfa_max_range", &tfa98xx->max_mohms);
-    if (ret) {
-        dev_err(&i2c->dev, "Failed to parse spk_max_range node\n");
-        tfa98xx->max_mohms = SMART_PA_RANGE_DEFAULT_MAX;
-    }
-
-    dev_err(&i2c->dev, "min_mohms=%d, max_mohms=%d\n", tfa98xx->min_mohms, tfa98xx->max_mohms);
-    #endif /* OPLUS_ARCH_EXTENDS */
     /* Modify the stream names, by appending the i2c device address.
      * This is used with multicodec, in order to discriminate the devices.
      * Stream names appear in the dai definition and in the stream       .
@@ -3972,21 +3776,18 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
         tfa98xx->flags |= TFA98XX_FLAG_SKIP_INTERRUPTS;
     }
 
+#ifdef CONFIG_DEBUG_FS
     tfa98xx_debug_init(tfa98xx, i2c);
-#ifdef OPLUS_ARCH_EXTENDS
+#endif
+#ifdef VENDOR_EDIT
 /*xiang.fei@PSW.MM.AudioDriver.FTM, 2017/02/15, Add for ringing*/
     // create debug file
-    #ifdef CONFIG_DEBUG_FS
     tfa98xx_debugfs = debugfs_create_file(TFA98XX_DEBUG_FS_NAME,
-                      S_IFREG | S_IRUGO | S_IWUSR, NULL, (void *)TFA98XX_DEBUG_FS_NAME, &tfa98xx_debug_ops);
-    #else
-    proc_create_data(TFA98XX_DEBUG_FS_NAME,
-                     S_IFREG | S_IRUGO | S_IWUSR, NULL, &tfa98xx_debug_ops, (void *)TFA98XX_DEBUG_FS_NAME);
-    #endif /*CONFIG_DEBUG_FS*/
+                      S_IFREG | S_IRUGO | S_IWUSR, NULL, (void *) TFA98XX_DEBUG_FS_NAME, &tfa98xx_debug_ops);
 
     ftm_mode = get_boot_mode();
     pr_err("ftm_mode=%d\n", ftm_mode);
-#endif /* OPLUS_ARCH_EXTENDS */
+#endif /* VENDOR_EDIT */
     /* Register the sysfs files for climax backdoor access */
     ret = device_create_bin_file(&i2c->dev, &dev_attr_rw);
     if (ret)
@@ -4012,20 +3813,22 @@ static int tfa98xx_i2c_remove(struct i2c_client *i2c)
     pr_debug("\n");
 
     cancel_delayed_work_sync(&tfa98xx->interrupt_work);
-	#ifndef OPLUS_ARCH_EXTENDS
+	#ifndef VENDOR_EDIT
 	/*Ping.Zhang@PSW.MM.AudioDriver.SmartPA, 2016/08/18, Delete for remove monitor*/
     cancel_delayed_work_sync(&tfa98xx->monitor_work);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
     cancel_delayed_work_sync(&tfa98xx->init_work);
     cancel_delayed_work_sync(&tfa98xx->tapdet_work);
-	#ifdef OPLUS_ARCH_EXTENDS
+	#ifdef VENDOR_EDIT
 	/*John.Xu@PSW.MM.AudioDriver.SmartPA, 2015/12/24, Add for avoid pop when start*/
 	cancel_delayed_work_sync(&tfa98xx->vol_work);
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#endif /* VENDOR_EDIT */
 
     device_remove_bin_file(&i2c->dev, &dev_attr_reg);
     device_remove_bin_file(&i2c->dev, &dev_attr_rw);
+#ifdef CONFIG_DEBUG_FS
     tfa98xx_debug_remove(tfa98xx);
+#endif
 
     tfa98xx_unregister_dsp(tfa98xx);
 
@@ -4074,11 +3877,10 @@ static int __init tfa98xx_i2c_init(void)
     int ret = 0;
     pr_info("TFA98XX driver version %s\n", TFA98XX_VERSION);
 
-    #ifdef OPLUS_ARCH_EXTENDS
+    #ifdef VENDOR_EDIT
     //Kaiqin.Huang@RM.MM.AudioDriver.SmartPA, 2019/10/12, Modify for multi-project baseline
-	if (get_project() == 19651 || get_project() == 19691 || get_project() == 18621) {
-
-	} else {
+    if (get_project() == 18041)
+    {
         pr_err("tfa98xx not support the project:%d\n", get_project());
         return -1;
     }
