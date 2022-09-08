@@ -23,15 +23,15 @@
 #dts-dirs += zte
 #else
 
-dts-dirs += 18097
+#dts-dirs += 18097
 
-ifeq ($(CONFIG_BRAND_SHOW_FLAG), realme)
-dts-dirs += 19601
-else
-dts-dirs += 18041
-endif
+#ifeq ($(CONFIG_BRAND_SHOW_FLAG), realme)
+#dts-dirs += 19601
+#else
+#dts-dirs += 18041
+#endif
 
-dts-dirs += 19651
+#dts-dirs += 19651
 dts-dirs += qcom
 
 #endif
