@@ -283,6 +283,7 @@
 
 		pm660_pdphy: qcom,usb-pdphy@1700 {
 			compatible = "qcom,qpnp-pdphy";
+			status = "disabled";//add micro usb by ouyangbaili
 			reg = <0x1700 0x100>;
 			vdd-pdphy-supply = <&pm660l_l7>;
 			vbus-supply = <0>;
@@ -550,6 +551,9 @@
 		thermal-sensors = <&bcl_sensor 2>;
 		wake-capable-sensor;
 		tracks-low;
+		/*#ifdef OPLUS_FEATURE_CHG_BASIC*/
+		//status = "disabled";
+		//#endif /* VENDOR_EDIT */
 
 		trips {
 			pm660_vbat_adc: vbat-adc {
@@ -567,6 +571,9 @@
 		thermal-sensors = <&bcl_sensor 3>;
 		wake-capable-sensor;
 		tracks-low;
+		/*#ifdef OPLUS_FEATURE_CHG_BASIC*/
+		status = "disabled";
+		//#endif /* VENDOR_EDIT */
 
 		trips {
 			vbat-low {
@@ -584,6 +591,9 @@
 		thermal-sensors = <&bcl_sensor 4>;
 		wake-capable-sensor;
 		tracks-low;
+		/*#ifdef OPLUS_FEATURE_CHG_BASIC*/
+		status = "disabled";
+		//#endif /* VENDOR_EDIT */
 
 		trips {
 			vbat-too-low {
@@ -601,6 +611,9 @@
 		thermal-sensors = <&bcl_sensor 5>;
 		wake-capable-sensor;
 		tracks-low;
+		/*#ifdef OPLUS_FEATURE_CHG_BASIC*/
+		//status = "disabled";
+		//#endif /* VENDOR_EDIT */
 
 		trips {
 			pm660_low_soc: low-soc {

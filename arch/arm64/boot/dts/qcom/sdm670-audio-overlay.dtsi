@@ -190,9 +190,6 @@
 
 &soc {
 	wcd_usbc_analog_en1_gpio: msm_cdc_pinctrl_usbc_audio_en1 {
-		/* #ifdef OPLUS_ARCH_EXTENDS */
-		status = "disabled";
-		/* #endif OPLUS_ARCH_EXTENDS */
 		compatible = "qcom,msm-cdc-pinctrl";
 		pinctrl-names = "aud_active", "aud_sleep";
 		pinctrl-0 = <&wcd_usbc_analog_en1_active>;

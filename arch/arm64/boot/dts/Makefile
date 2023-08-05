@@ -32,7 +32,6 @@ dts-dirs += 18041
 endif
 
 dts-dirs += 19651
-dts-dirs += 18621
 dts-dirs += qcom
 
 #endif
