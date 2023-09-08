@@ -82,8 +82,20 @@ static int pm_qos_state = 0;
 #define PM_QOS_TOUCH_WAKEUP_VALUE 400
 #endif
 
-uint8_t DouTap_enable = 0;				 // double tap
-uint8_t gesture_enable = 0;
+uint8_t DouTap_enable = 0;               // double tap
+uint8_t UpVee_enable  = 0;               // V
+uint8_t DownVee_enable  = 0;             // ^
+uint8_t LeftVee_enable = 0;              // >
+uint8_t RightVee_enable = 0;             // <
+uint8_t Circle_enable = 0;               // O
+uint8_t DouSwip_enable = 0;              // ||
+uint8_t Left2RightSwip_enable = 0;       // -->
+uint8_t Right2LeftSwip_enable = 0;       // <--
+uint8_t Up2DownSwip_enable = 0;          // |v
+uint8_t Down2UpSwip_enable = 0;          // |^
+uint8_t Mgestrue_enable = 0;             // M
+uint8_t Wgestrue_enable = 0;             // W
+uint8_t Enable_gesture = 0;
 
 /*******Part2:declear Area********************************/
 static void speedup_resume(struct work_struct *work);
@@ -454,62 +466,60 @@ static void tp_gesture_handle(struct touchpanel_data *ts)
              gesture_info_temp.gesture_type == FingerprintUp ? "(fingerprintup)" :
              gesture_info_temp.gesture_type == SingleTap ? "single tap" :
              gesture_info_temp.gesture_type == Heart ? "heart" : "unknown");
-
-	switch (gesture_info_temp.gesture_type) {
-		case DouTap:
-			enabled = DouTap_enable;
-			key = KEY_DOUBLE_TAP;
-			break;
-		case UpVee:
-		        enabled = gesture_enable;
-			key = KEY_GESTURE_UP_ARROW;
-			break;
-		case DownVee:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_DOWN_ARROW;
-			break;
-		case LeftVee:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_LEFT_ARROW;
-			break;
-		case RightVee:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_RIGHT_ARROW;
-			break;
-		case Circle:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_CIRCLE;
-			break;
-		case DouSwip:
-                        enabled = gesture_enable ;
-			key = KEY_GESTURE_TWO_SWIPE;
-			break;
-		case Left2RightSwip:
-                        enabled = gesture_enable ;
-			key = KEY_GESTURE_SWIPE_LEFT;
-			break;
-		case Right2LeftSwip:
-                        enabled = gesture_enable ;
-			key = KEY_GESTURE_SWIPE_RIGHT;
-			break;
-		case Up2DownSwip:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_SWIPE_UP;
-			break;
-		case Down2UpSwip:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_SWIPE_DOWN;
-			break;
-		case Mgestrue:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_M;
-			break;
-		case Wgestrue:
-                        enabled = gesture_enable;
-			key = KEY_GESTURE_W;
-			break;
-	}
-
+        switch (gesture_info_temp.gesture_type) {
+        case DouTap:
+            enabled = DouTap_enable;
+            key = KEY_DOUBLE_TAP;
+            break;
+        case UpVee:
+            enabled = UpVee_enable;
+            key = KEY_GESTURE_UP_ARROW;
+            break;
+        case DownVee:
+            enabled = DownVee_enable;
+            key = KEY_GESTURE_DOWN_ARROW;
+            break;
+        case LeftVee:
+            enabled = LeftVee_enable;
+            key = KEY_GESTURE_LEFT_ARROW;
+            break;
+        case RightVee:
+            enabled = RightVee_enable;
+            key = KEY_GESTURE_RIGHT_ARROW;
+            break;
+        case Circle:
+            enabled = Circle_enable;
+            key = KEY_GESTURE_CIRCLE;
+            break;
+        case DouSwip:
+            enabled = DouSwip_enable;
+            key = KEY_GESTURE_TWO_SWIPE;
+            break;
+        case Left2RightSwip:
+            enabled = Left2RightSwip_enable;
+            key = KEY_GESTURE_SWIPE_LEFT;
+            break;
+        case Right2LeftSwip:
+            enabled = Right2LeftSwip_enable;
+            key = KEY_GESTURE_SWIPE_RIGHT;
+            break;
+        case Up2DownSwip:
+            enabled = Up2DownSwip_enable;
+            key = KEY_GESTURE_SWIPE_UP;
+            break;
+        case Down2UpSwip:
+            enabled = Down2UpSwip_enable;
+            key = KEY_GESTURE_SWIPE_DOWN;
+            break;
+        case Mgestrue:
+            enabled = Mgestrue_enable;
+            key = KEY_GESTURE_M;
+            break;
+        case Wgestrue:
+            enabled = Wgestrue_enable;
+            key = KEY_GESTURE_W;
+            break;
+    }
 #if GESTURE_COORD_GET
     if (ts->ts_ops->get_gesture_coord) {
         ts->ts_ops->get_gesture_coord(ts->chip_data, gesture_info_temp.gesture_type);
