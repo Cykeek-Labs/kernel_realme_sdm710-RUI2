@@ -303,7 +303,7 @@ static void __ref asmp_resume(void)
         if (!cpu_online(cpu))
             asmp_online_cpus(cpu);
 
-        update_prev_idle(cpu);
+        update_prev_idle(cpu);  
     }
 
     /* rescheduled queue atleast on 3 seconds */
